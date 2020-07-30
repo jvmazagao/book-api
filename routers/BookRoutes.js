@@ -1,25 +1,10 @@
 const express = require('express');
-
 const routes = (model) => {
-    const router = express.Router()
-
+    const router = express.Router();
+    const BookController = require('../controllers/BookController')(model);
     router.route('/books')
-        .post((req, res) => {
-            const book = new model(req.body);
-            book.save();
-            res.status(201).send(book);
-        })
-        .get((req, res) => {
-            const query = req.query.genre ? query.genre = req.query.genre : {};
-
-            model.find(query, (err, books) => {
-                if (err) {
-                    return res.status(500).send(err);
-                } else {
-                    return res.json(books);
-                }
-            })
-        });
+        .post(BookController.createBook)
+        .get(BookController.listBooks);
 
     router.use('/books/:id', (req, res, next) => {
         model.findById(req.params.id, (err, book) => {
@@ -36,7 +21,10 @@ const routes = (model) => {
 
     router.route('/books/:id')
         .get((req, res) => {
-            return res.send(req.book)
+            let book = req.book;
+            book.links = {};
+            book.links.FilterByGenre = 'http://' + req.headers.host + '/api/books?genre=' + book.genre.replace(' ', '%20');
+            return res.send(book)
         }).put((req, res) => {
             req.book.title = req.body.title;
             req.book.author = req.body.author;
